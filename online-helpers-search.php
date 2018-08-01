@@ -69,18 +69,19 @@ function get_properties( $request ) {
             $query_mask = new WP_Query( $args ); 
             $query_ids = array_merge( $query_ids, $query_mask->posts );
         }
-        
     }
     
     // Run new query with merged IDs
-    $sorted_query = new WP_Query( array( 
+    $sorted_args = array( 
         'post__in'          => $query_ids,
         'post_type'         => 'property',
         'orderby'           => 'date', 
         'order'             => 'DESC',
         'posts_per_page'    => 10,
-        'page'              => $current_page,
-    ) );
+        'paged'             => $current_page,
+    );
+    
+    $sorted_query = new WP_Query( $sorted_args );
     
     // Prepare return data
     $data = array(
@@ -88,6 +89,8 @@ function get_properties( $request ) {
         'current_page'		=> $current_page,
         'max_num_pages'		=> $sorted_query->max_num_pages,
         'total'				=> $sorted_query->found_posts,
+        'raw_posts'			=> $sorted_query->posts,
+        'sorted_args'		=> $sorted_args,
     );
     
     $data['properties'] = [];
@@ -122,6 +125,7 @@ function get_properties( $request ) {
             $data['properties'][] = array(
                 'thumb_url'         => $attachment[0],
                 'thumb_alt'         => $attachment['alt'],
+                'property_id'       => get_the_ID(),
                 'property_name'     => get_the_title(),
                 'property_desc'     => get_the_excerpt(),
                 'property_suburb'   => $property->get_property_meta( 'property_address_suburb' ),
