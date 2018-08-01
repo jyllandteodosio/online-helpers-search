@@ -73,16 +73,21 @@ function get_properties( $request ) {
     }
     
     // Run new query with merged IDs
-    $sorted_query = new WP_Query( array( 'post__in' => $query_ids ) );
+    $sorted_query = new WP_Query( array( 
+        'post__in'          => $query_ids,
+        'post_type'         => 'property',
+        'orderby'           => 'date', 
+        'order'             => 'DESC',
+        'posts_per_page'    => 10,
+        'page'              => $current_page,
+    ) );
     
     // Prepare return data
     $data = array(
-        'args'              => $args,
         'search_args'       => $search_terms,
         'max_num_pages'		=> $sorted_query->max_num_pages,
         'total'				=> $sorted_query->found_posts,
-        'sorted_query'      => $sorted_query->posts,
-        'property_ids'      => $query_ids,
+//        'sorted_query'      => $sorted_query->posts,
     );
     
     $data['properties'] = [];
