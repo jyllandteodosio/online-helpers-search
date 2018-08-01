@@ -85,9 +85,9 @@ function get_properties( $request ) {
     // Prepare return data
     $data = array(
         'search_args'       => $search_terms,
+        'current_page'		=> $current_page,
         'max_num_pages'		=> $sorted_query->max_num_pages,
         'total'				=> $sorted_query->found_posts,
-//        'sorted_query'      => $sorted_query->posts,
     );
     
     $data['properties'] = [];
@@ -107,11 +107,17 @@ function get_properties( $request ) {
                 $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
             }
             
+            $property_bed = $property->get_property_meta( 'property_bedrooms' );
+            $property_bath = $property->get_property_meta( 'property_bathrooms' );
+            $property_garage = $property->get_property_meta( 'property_garage' );
+            
             $property_details = array(
-                'bed'   => $property->get_property_meta( 'property_bedrooms' ),
-                'bath'  => $property->get_property_meta( 'property_bathrooms' ),
-                'garage'=> $property->get_property_meta( 'property_garage' ),
+                'bed'   => $property_bed ? $property_bed : 'N/A',
+                'bath'  => $property_bath ? $property_bath : 'N/A',
+                'garage'=> $property_garage ? $property_garage : 'N/A',
             );
+            
+            $property_price = $property->get_property_meta( 'property_price_view' );
             
             $data['properties'][] = array(
                 'thumb_url'         => $attachment[0],
@@ -119,7 +125,7 @@ function get_properties( $request ) {
                 'property_name'     => get_the_title(),
                 'property_desc'     => get_the_excerpt(),
                 'property_suburb'   => $property->get_property_meta( 'property_address_suburb' ),
-                'property_price'    => $property->get_price(),
+                'property_price'    => $property_price,
                 'property_details'  => $property_details,
                 'property_link'     => get_the_permalink(),
             );
