@@ -39,7 +39,7 @@ function register_routes() {
 function get_properties( $request ) {
     // Get the paramaters from the request
     $params = $request->get_params();
-    $search = isset($params[ 'search' ]) ? $params[ 'search' ] : '';
+    $search = isset($params[ 'search_text' ]) ? $params[ 'search_text' ] : '';
     $page = isset($params[ 'page' ]) ? $params[ 'page' ] : 1;
     $current_page = $page ? intval( $page ) : 1;
     
@@ -90,7 +90,7 @@ function get_properties( $request ) {
         'max_num_pages'		=> $sorted_query->max_num_pages,
         'total'				=> $sorted_query->found_posts,
         'raw_posts'			=> $sorted_query->posts,
-        'sorted_args'		=> $sorted_args,
+        'params'		    => $params,
     );
     
     $data['properties'] = [];
@@ -102,6 +102,7 @@ function get_properties( $request ) {
             
             global $property;
             
+            // Prepare Property Image Thumbnail
             $attachment_id = get_post_thumbnail_id( get_the_ID() );
             $attachment = array();
 
@@ -109,10 +110,15 @@ function get_properties( $request ) {
                 $attachment = wp_get_attachment_image_src( $attachment_id, 'large' );
                 $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
             }
-            
-            $property_bed = $property->get_property_meta( 'property_bedrooms' );
-            $property_bath = $property->get_property_meta( 'property_bathrooms' );
-            $property_garage = $property->get_property_meta( 'property_garage' );
+
+            // Prepare Property Details
+            $property_type = get_post_meta( get_the_ID(), 'property_category', true );
+
+            $property_suburb = $property->get_property_meta( 'property_address_suburb' );
+
+            $property_bed = $property->get_property_meta( 'property_bedrooms' ) ? intval( $property->get_property_meta( 'property_bedrooms' ) ) : 0;
+            $property_bath = $property->get_property_meta( 'property_bathrooms' ) ? intval( $property->get_property_meta( 'property_bathrooms' ) ) : 0;
+            $property_garage = $property->get_property_meta( 'property_garage' ) ? intval( $property->get_property_meta( 'property_garage' ) ) : 0;
             
             $property_details = array(
                 'bed'   => $property_bed ? $property_bed : 'N/A',
@@ -121,22 +127,76 @@ function get_properties( $request ) {
             );
             
             $property_price = $property->get_property_meta( 'property_price_view' );
+            $property_price_raw = $property->get_property_meta( 'property_price' );
             
-            $data['properties'][] = array(
-                'thumb_url'         => $attachment[0],
-                'thumb_alt'         => $attachment['alt'],
-                'property_id'       => get_the_ID(),
-                'property_name'     => get_the_title(),
-                'property_desc'     => get_the_excerpt(),
-                'property_suburb'   => $property->get_property_meta( 'property_address_suburb' ),
-                'property_price'    => $property_price,
-                'property_details'  => $property_details,
-                'property_link'     => get_the_permalink(),
-            );
+            // Filter Properties
+            $add_property = check_property_filter( get_the_ID(), $property, $params );
+            
+            if( $add_property ) {
+                $data['properties'][] = array(
+                    'thumb_url'         => $attachment[0],
+                    'thumb_alt'         => $attachment['alt'],
+                    'property_id'       => get_the_ID(),
+                    'property_name'     => get_the_title(),
+                    'property_desc'     => get_the_excerpt(),
+                    'property_suburb'   => $property_suburb,
+                    'property_type'     => $property_type,
+                    'property_price'    => $property_price,
+                    'property_details'  => $property_details,
+                    'property_link'     => get_the_permalink(),
+                );
+            }
         }
 
         wp_reset_postdata(); 
     }
     
     return new WP_REST_Response( $data, 200 );
+}
+
+function check_property_filter ( $property_id, $property, $params ) {
+    $suburbs = isset( $params[ 'suburbs' ] ) ? $params[ 'suburbs' ] : array() ;
+    $property_types = isset( $params[ 'property_types' ] ) ? $params[ 'property_types' ] : array();
+    
+    $bed_min = isset( $params[ 'property_bedroom_min' ] ) ? intval( $params[ 'property_bedroom_min' ] ) : 1;
+    $bed_max = isset( $params[ 'property_bedroom_max' ] ) && $params[ 'property_bedroom_max' ] > 0 ? intval( $params[ 'property_bedroom_max' ] ) : PHP_INT_MAX;
+    
+    $price_min = isset( $params[ 'property_price_min' ] ) ? intval( $params[ 'property_price_min' ] ) : 0;
+    $price_max = isset( $params[ 'property_price_max' ] ) && $params[ 'property_price_max' ] > 0 ? intval( $params[ 'property_price_max' ] ) : PHP_INT_MAX;
+
+    // Property Types Filter
+    $property_type = get_post_meta( get_the_ID(), 'property_category', true );
+    if( !empty( $property_types ) ) {
+        if( !in_array( $property_type, $property_types ) ) {
+            return false;
+        }
+    }
+
+    // Property Suburb Filter
+    $property_suburb = $property->get_property_meta( 'property_address_suburb' );
+    if( !empty( $suburbs ) ) {
+        if( !in_array( $property_suburb, $suburbs ) ) {
+            return false;
+        }
+    }
+
+    // Prepare Property Details
+    $property_bed = $property->get_property_meta( 'property_bedrooms' ) ? intval( $property->get_property_meta( 'property_bedrooms' ) ) : 0;
+    $property_bath = $property->get_property_meta( 'property_bathrooms' ) ? intval( $property->get_property_meta( 'property_bathrooms' ) ) : 0;
+    $property_garage = $property->get_property_meta( 'property_garage' ) ? intval( $property->get_property_meta( 'property_garage' ) ) : 0;
+
+    // Bed Max and Bed Min Filters
+    if( !( $property_bed >= $bed_min && $property_bed <= $bed_max ) ) {
+        return false;
+    }
+
+    // Price Max and Price Min Filters
+    $property_price = $property->get_property_meta( 'property_price_view' );
+    $property_price_raw = $property->get_property_meta( 'property_price' );
+
+    if( !( $property_price_raw >= $price_min && $property_price_raw <= $price_max ) ) {
+        return false;
+    }
+    
+    return true;
 }
