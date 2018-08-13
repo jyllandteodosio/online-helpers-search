@@ -172,10 +172,8 @@ function check_property_filter ( $property_id, $property, $params ) {
     } else {
         $has_params = false;
     }
-
-    if( !empty( $search_array ) ) {
-        return search_match( get_the_ID(), $property, $search_array, $search_text );
-    } else if( $has_params ) {
+        
+    if( $has_params ) {
 
         // Property Suburbs Filter
         $property_suburb = $property->get_property_meta( 'property_address_suburb' );
@@ -228,10 +226,18 @@ function check_property_filter ( $property_id, $property, $params ) {
         $property_price_raw = $property->get_property_meta( 'property_price' );
 
         $price_match = ( $property_price_raw >= $price_min && $property_price_raw <= $price_max ) ? true : false;
+        
+        if( !empty( $search_array ) ) {
+            $search_match = search_match( get_the_ID(), $property, $search_array, $search_text );
+        } else {
+            $search_match = true;
+        }
 
-        if( $suburb_match && $property_type_match && $bed_match && $price_match ) {
+        if( $suburb_match && $property_type_match && $bed_match && $price_match && $search_match ) {
             return true;
         }
+    } else if( !empty( $search_array ) ) {
+        return search_match( get_the_ID(), $property, $search_array, $search_text );
     } else {
         return true;
     }
