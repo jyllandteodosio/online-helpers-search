@@ -42,6 +42,8 @@ function get_properties( $request ) {
     $search = isset( $params[ 'search_text' ] ) ? $params[ 'search_text' ] : '';
     $page = isset( $params[ 'page' ] ) ? $params[ 'page' ] : 1;
     $current_page = $page ? intval( $page ) : 1;
+    $param_post_type = isset( $params[ 'post_type' ] ) ? $params[ 'post_type' ] : 'property';
+    $param_property_status = isset( $params[ 'property_status' ] ) ? $params[ 'property_status' ] : 'current';
 
     $has_params = false;
 
@@ -57,7 +59,7 @@ function get_properties( $request ) {
 
     // Run query
     $sorted_args = array( 
-        'post_type'         => 'property',
+        'post_type'         => $param_post_type,
         'orderby'           => 'date', 
         'order'             => 'DESC',
         'posts_per_page'    => -1,
@@ -114,11 +116,14 @@ function get_properties( $request ) {
 
                 $property_price = $property->get_property_meta( 'property_price_view' );
                 $property_price_raw = $property->get_property_meta( 'property_price' );
+                
+                $property_status = $property->get_property_meta( 'property_status' );
 
                 $properties[] = array(
                     'thumb_url'         => $attachment[0],
                     'thumb_alt'         => $attachment['alt'],
                     'property_id'       => get_the_ID(),
+                    'property_status'   => $property_status,
                     'property_name'     => get_the_title(),
                     'property_desc'     => get_the_excerpt(),
                     'property_suburb'   => $property_suburb,
@@ -161,6 +166,8 @@ function check_property_filter ( $property_id, $property, $params ) {
 
     $search_array = isset( $params[ 'search_text' ] ) && $params[ 'search_text' ] != '' ? explode( " ", $params[ 'search_text' ] ) : array();
     $search_text = isset( $params[ 'search_text' ] ) && $params[ 'search_text' ] != '' ? $params[ 'search_text' ] : '';
+    
+    $param_property_status = isset( $params[ 'property_status' ] ) ? $params[ 'property_status' ] : 'current';
 
     if( isset( $params[ 'suburbs' ] )
        || isset( $params[ 'property_types' ] )
@@ -174,7 +181,12 @@ function check_property_filter ( $property_id, $property, $params ) {
     }
         
     if( $has_params ) {
-
+        
+        // Property Status Filter
+        $property_status = $property->get_property_meta( 'property_status' );
+        $status_match = $param_property_status == $property_status ? true : false;
+//        $status_match = true;
+        
         // Property Suburbs Filter
         $property_suburb = $property->get_property_meta( 'property_address_suburb' );
         $suburbs = array();
@@ -233,7 +245,7 @@ function check_property_filter ( $property_id, $property, $params ) {
             $search_match = true;
         }
 
-        if( $suburb_match && $property_type_match && $bed_match && $price_match && $search_match ) {
+        if( $status_match && $suburb_match && $property_type_match && $bed_match && $price_match && $search_match ) {
             return true;
         }
     } else if( !empty( $search_array ) ) {
