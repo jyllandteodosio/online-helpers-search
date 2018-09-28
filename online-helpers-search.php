@@ -50,6 +50,7 @@ function get_properties( $request ) {
     if( isset( $params[ 'search_text' ] )
        || isset( $params[ 'suburbs' ] )
        || isset( $params[ 'property_types' ] )
+       || isset( $params[ 'property_status' ] )
        || isset( $params[ 'property_bedroom_max' ] ) 
        || isset($params[ 'property_bedroom_min' ] ) 
        || isset($params[ 'property_price_max' ] ) 
@@ -131,10 +132,12 @@ function get_properties( $request ) {
                         'property_suburb'   => $property_suburb,
                         'property_type'     => $property_type,
                         'property_price'    => $property_price,
+                        'property_price_raw'=> $property_price_raw,
                         'property_details'  => $property_details,
                         'property_link'     => get_the_permalink(),
                         'add_property'      => $add_property,
                         'property'          => $property,
+                        'has_params'        => $has_params,
                     );
                 }
             }
@@ -175,6 +178,7 @@ function check_property_filter ( $property_id, $property, $params ) {
 
     if( isset( $params[ 'suburbs' ] )
        || isset( $params[ 'property_types' ] )
+       || isset( $params[ 'property_status' ] )
        || isset( $params[ 'property_bedroom_max' ] ) 
        || isset($params[ 'property_bedroom_min' ] ) 
        || isset($params[ 'property_price_max' ] ) 
@@ -230,8 +234,10 @@ function check_property_filter ( $property_id, $property, $params ) {
             } else {
                 $bed_match = ( $property_bed >= $bed_min && $property_bed <= $bed_max ) ? true : false;
             }
-        } else {
+        } elseif( $property_bed > 0 ) {
             $bed_match = ( $property_bed >= $bed_min && $property_bed <= $bed_max ) ? true : false;
+        } else {
+            $bed_match = true;
         }
 
 
