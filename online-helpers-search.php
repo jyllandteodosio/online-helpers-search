@@ -100,6 +100,9 @@ function get_properties( $request ) {
                     if( $attachment_id ){
                         $attachment = wp_get_attachment_image_src( $attachment_id, 'large' );
                         $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
+                    } else {
+                        $attachment[0] = '';
+                        $attachment['alt'] = '';
                     }
 
                     // Prepare Property Details
@@ -135,9 +138,6 @@ function get_properties( $request ) {
                         'property_price_raw'=> $property_price_raw,
                         'property_details'  => $property_details,
                         'property_link'     => get_the_permalink(),
-                        'add_property'      => $add_property,
-                        'property'          => $property,
-                        'has_params'        => $has_params,
                     );
                 }
             }
