@@ -79,60 +79,64 @@ function get_properties( $request ) {
 
             global $property;
 
-            $add_property = false;
+            if( $property ) {
 
-            // Filter Properties
-            if( $has_params ) {
-                $add_property = check_property_filter( get_the_ID(), $property, $params );
-            } else {
-                $add_property = true;
-            }
+                $add_property = false;
 
-            if( $add_property ) {
-
-                // Prepare Property Image Thumbnail
-                $attachment_id = get_post_thumbnail_id( get_the_ID() );
-                $attachment = array();
-
-                if( $attachment_id ){
-                    $attachment = wp_get_attachment_image_src( $attachment_id, 'large' );
-                    $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
+                // Filter Properties
+                if( $has_params ) {
+                    $add_property = check_property_filter( get_the_ID(), $property, $params );
+                } else {
+                    $add_property = true;
                 }
 
-                // Prepare Property Details
-                $property_type = get_post_meta( get_the_ID(), 'property_category', true );
+                if( $add_property && $property ) {
 
-                $property_suburb = $property->get_property_meta( 'property_address_suburb' );
+                    // Prepare Property Image Thumbnail
+                    $attachment_id = get_post_thumbnail_id( get_the_ID() );
+                    $attachment = array();
 
-                $property_bed = $property->get_property_meta( 'property_bedrooms' ) ? intval( $property->get_property_meta( 'property_bedrooms' ) ) : 0;
-                $property_bath = $property->get_property_meta( 'property_bathrooms' ) ? intval( $property->get_property_meta( 'property_bathrooms' ) ) : 0;
-                $property_garage = $property->get_property_meta( 'property_garage' ) ? intval( $property->get_property_meta( 'property_garage' ) ) : 0;
+                    if( $attachment_id ){
+                        $attachment = wp_get_attachment_image_src( $attachment_id, 'large' );
+                        $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
+                    }
 
-                $property_details = array(
-                    'bed'   => $property_bed ? $property_bed : 'N/A',
-                    'bath'  => $property_bath ? $property_bath : 'N/A',
-                    'garage'=> $property_garage ? $property_garage : 'N/A',
-                );
+                    // Prepare Property Details
+                    $property_type = get_post_meta( get_the_ID(), 'property_category', true );
 
-                $property_price = $property->get_property_meta( 'property_price_view' );
-                $property_price_raw = $property->get_property_meta( 'property_price' );
-                
-                $property_status = $property->get_property_meta( 'property_status' );
+                    $property_suburb = $property->get_property_meta( 'property_address_suburb' );
 
-                $properties[] = array(
-                    'thumb_url'         => $attachment[0],
-                    'thumb_alt'         => $attachment['alt'],
-                    'property_id'       => get_the_ID(),
-                    'property_status'   => $property_status,
-                    'property_name'     => get_the_title(),
-                    'property_desc'     => get_the_excerpt(),
-                    'property_suburb'   => $property_suburb,
-                    'property_type'     => $property_type,
-                    'property_price'    => $property_price,
-                    'property_details'  => $property_details,
-                    'property_link'     => get_the_permalink(),
-                    'add_property'      => $add_property,
-                );
+                    $property_bed = $property->get_property_meta( 'property_bedrooms' ) ? intval( $property->get_property_meta( 'property_bedrooms' ) ) : 0;
+                    $property_bath = $property->get_property_meta( 'property_bathrooms' ) ? intval( $property->get_property_meta( 'property_bathrooms' ) ) : 0;
+                    $property_garage = $property->get_property_meta( 'property_garage' ) ? intval( $property->get_property_meta( 'property_garage' ) ) : 0;
+
+                    $property_details = array(
+                        'bed'   => $property_bed ? $property_bed : 'N/A',
+                        'bath'  => $property_bath ? $property_bath : 'N/A',
+                        'garage'=> $property_garage ? $property_garage : 'N/A',
+                    );
+
+                    $property_price = $property->get_property_meta( 'property_price_view' );
+                    $property_price_raw = $property->get_property_meta( 'property_price' );
+
+                    $property_status = $property->get_property_meta( 'property_status' );
+
+                    $properties[] = array(
+                        'thumb_url'         => $attachment[0],
+                        'thumb_alt'         => $attachment['alt'],
+                        'property_id'       => get_the_ID(),
+                        'property_status'   => $property_status,
+                        'property_name'     => get_the_title(),
+                        'property_desc'     => get_the_excerpt(),
+                        'property_suburb'   => $property_suburb,
+                        'property_type'     => $property_type,
+                        'property_price'    => $property_price,
+                        'property_details'  => $property_details,
+                        'property_link'     => get_the_permalink(),
+                        'add_property'      => $add_property,
+                        'property'          => $property,
+                    );
+                }
             }
         }
 
@@ -166,7 +170,7 @@ function check_property_filter ( $property_id, $property, $params ) {
 
     $search_array = isset( $params[ 'search_text' ] ) && $params[ 'search_text' ] != '' ? explode( " ", $params[ 'search_text' ] ) : array();
     $search_text = isset( $params[ 'search_text' ] ) && $params[ 'search_text' ] != '' ? $params[ 'search_text' ] : '';
-    
+
     $param_property_status = isset( $params[ 'property_status' ] ) ? $params[ 'property_status' ] : 'current';
 
     if( isset( $params[ 'suburbs' ] )
@@ -179,14 +183,14 @@ function check_property_filter ( $property_id, $property, $params ) {
     } else {
         $has_params = false;
     }
-        
+
     if( $has_params ) {
-        
+
         // Property Status Filter
         $property_status = $property->get_property_meta( 'property_status' );
         $status_match = $param_property_status == $property_status ? true : false;
-//        $status_match = true;
-        
+        //        $status_match = true;
+
         // Property Suburbs Filter
         $property_suburb = $property->get_property_meta( 'property_address_suburb' );
         $suburbs = array();
@@ -238,7 +242,7 @@ function check_property_filter ( $property_id, $property, $params ) {
         $property_price_raw = $property->get_property_meta( 'property_price' );
 
         $price_match = ( $property_price_raw >= $price_min && $property_price_raw <= $price_max ) ? true : false;
-        
+
         if( !empty( $search_array ) ) {
             $search_match = search_match( get_the_ID(), $property, $search_array, $search_text );
         } else {
@@ -264,7 +268,7 @@ function search_match( $property_id, $property, $search_array, $search_text ) {
     //    if( !$property_serialized ) {
     // Get property attributes
     $property_title = get_the_title( $property_id );
-    
+
     $property_suburb = $property->get_property_meta( 'property_address_suburb' );
     $property_type = get_post_meta( $property_id, 'property_category', true );
 
