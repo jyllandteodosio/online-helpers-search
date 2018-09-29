@@ -50,6 +50,7 @@ function get_properties( $request ) {
     if( isset( $params[ 'search_text' ] )
        || isset( $params[ 'suburbs' ] )
        || isset( $params[ 'property_types' ] )
+       || isset( $params[ 'property_status' ] )
        || isset( $params[ 'property_bedroom_max' ] ) 
        || isset($params[ 'property_bedroom_min' ] ) 
        || isset($params[ 'property_price_max' ] ) 
@@ -99,6 +100,9 @@ function get_properties( $request ) {
                     if( $attachment_id ){
                         $attachment = wp_get_attachment_image_src( $attachment_id, 'large' );
                         $attachment['alt'] = get_post_meta( $attachment_id, '_wp_attachment_image_alt', true);
+                    } else {
+                        $attachment[0] = '';
+                        $attachment['alt'] = '';
                     }
 
                     // Prepare Property Details
@@ -118,6 +122,11 @@ function get_properties( $request ) {
 
                     $property_price = $property->get_property_meta( 'property_price_view' );
                     $property_price_raw = $property->get_property_meta( 'property_price' );
+                    
+                    if( $param_post_type == 'rental' ) {
+                        $property_price = $property->get_property_meta( 'property_rent_view' );
+                        $property_price_raw = $property->get_property_meta( 'property_rent' );
+                    }
 
                     $property_status = $property->get_property_meta( 'property_status' );
 
@@ -131,10 +140,9 @@ function get_properties( $request ) {
                         'property_suburb'   => $property_suburb,
                         'property_type'     => $property_type,
                         'property_price'    => $property_price,
+                        'property_price_raw'=> $property_price_raw,
                         'property_details'  => $property_details,
                         'property_link'     => get_the_permalink(),
-                        'add_property'      => $add_property,
-                        'property'          => $property,
                     );
                 }
             }
@@ -175,6 +183,7 @@ function check_property_filter ( $property_id, $property, $params ) {
 
     if( isset( $params[ 'suburbs' ] )
        || isset( $params[ 'property_types' ] )
+       || isset( $params[ 'property_status' ] )
        || isset( $params[ 'property_bedroom_max' ] ) 
        || isset($params[ 'property_bedroom_min' ] ) 
        || isset($params[ 'property_price_max' ] ) 
@@ -230,8 +239,10 @@ function check_property_filter ( $property_id, $property, $params ) {
             } else {
                 $bed_match = ( $property_bed >= $bed_min && $property_bed <= $bed_max ) ? true : false;
             }
-        } else {
+        } elseif( $property_bed > 0 ) {
             $bed_match = ( $property_bed >= $bed_min && $property_bed <= $bed_max ) ? true : false;
+        } else {
+            $bed_match = true;
         }
 
 
