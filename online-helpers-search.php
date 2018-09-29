@@ -122,6 +122,11 @@ function get_properties( $request ) {
 
                     $property_price = $property->get_property_meta( 'property_price_view' );
                     $property_price_raw = $property->get_property_meta( 'property_price' );
+                    
+                    if( $param_post_type == 'rental' ) {
+                        $property_price = $property->get_property_meta( 'property_rent_view' );
+                        $property_price_raw = $property->get_property_meta( 'property_rent' );
+                    }
 
                     $property_status = $property->get_property_meta( 'property_status' );
 
